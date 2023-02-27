@@ -1,0 +1,213 @@
+                            | #######################################################################
+                            | # Test for copying block of size 0;
+                            | #######################################################################
+0x000:                      | 	.pos 0
+0x000: 30f43004000000000000 | main:	irmovq Stack, %rsp  	# Set up stack pointer
+                            | 
+                            | 	# Set up arguments for copy function and then invoke it
+0x00a: 30f20000000000000000 | 	irmovq $0, %rdx		# src and dst have 0 elements
+0x014: 30f6a803000000000000 | 	irmovq dest, %rsi	# dst array
+0x01e: 30f79003000000000000 | 	irmovq src, %rdi	# src array
+0x028: 803b00000000000000   | 	call ncopy		 
+0x031: 802702000000000000   | 	call check	        # Call checker code
+0x03a: 00                   | 	halt                    # should halt with 0xaaaa in %rax
+0x03b:                      | StartFun:
+                            | #/* $begin ncopy-ys */
+                            | ##################################################################
+                            | # ncopy.ys - Copy a src block of len words to dst.
+                            | # Return the number of positive words (>0) contained in src.
+                            | #
+                            | # Include your name and ID here.
+                            | #
+                            | # Describe how and why you modified the baseline code.
+                            | # 1. use iaddq.
+                            | # 2. unroll loop.
+                            | ##################################################################
+                            | # Do not modify this portion
+                            | # Function prologue.
+                            | # %rdi = src, %rsi = dst, %rdx = len
+0x03b:                      | ncopy:
+                            | 
+                            | ##################################################################
+                            | # You can modify this portion
+                            | 	# Loop header
+0x03b: 6300                 | 	xorq %rax,%rax		# count = 0;
+0x03d: 2021                 |          rrmovq %rdx, %rcx
+0x03f: c0f1f8ffffffffffffff |          iaddq $-8, %rcx 
+                            | 	#andq %rdx,%rdx		# len <= 0?
+0x049: 71cb01000000000000   | 	jle Next2
+0x052:                      | Loop1:        
+0x052: 50870000000000000000 |         mrmovq (%rdi), %r8
+0x05c: 50970800000000000000 |         mrmovq 8(%rdi), %r9
+0x066: 50a71000000000000000 |         mrmovq 16(%rdi), %r10
+0x070: 50b71800000000000000 |         mrmovq 24(%rdi), %r11
+0x07a: 50c72000000000000000 |         mrmovq 32(%rdi), %r12
+0x084: 50d72800000000000000 |         mrmovq 40(%rdi), %r13
+0x08e: 50e73000000000000000 |         mrmovq 48(%rdi), %r14
+0x098: 50373800000000000000 |         mrmovq 56(%rdi), %rbx
+0x0a2: 40860000000000000000 |         rmmovq %r8, (%rsi)
+0x0ac: 40960800000000000000 |         rmmovq %r9, 8(%rsi)
+0x0b6: 40a61000000000000000 |         rmmovq %r10, 16(%rsi)
+0x0c0: 40b61800000000000000 |         rmmovq %r11, 24(%rsi)
+0x0ca: 40c62000000000000000 |         rmmovq %r12, 32(%rsi)
+0x0d4: 40d62800000000000000 |         rmmovq %r13, 40(%rsi)
+0x0de: 40e63000000000000000 |         rmmovq %r14, 48(%rsi)
+0x0e8: 40363800000000000000 |         rmmovq %rbx, 56(%rsi)
+0x0f2: 6288                 | ele1:   andq %r8, %r8           # val <= 0?
+0x0f4: 710701000000000000   |         jle ele2:               # if so, goto ele1:
+0x0fd: c0f00100000000000000 |         iaddq $1, %rax          # count++, %rax         
+0x107: 6299                 | ele2:   andq %r9, %r9          
+0x109: 711c01000000000000   |         jle ele3:
+0x112: c0f00100000000000000 |         iaddq $1, %rax
+0x11c: 62aa                 | ele3:   andq %r10, %r10
+0x11e: 713101000000000000   |         jle ele4:
+0x127: c0f00100000000000000 |         iaddq $1, %rax
+0x131: 62bb                 | ele4:   andq %r11, %r11
+0x133: 714601000000000000   |         jle ele5:
+0x13c: c0f00100000000000000 |         iaddq $1, %rax
+0x146: 62cc                 | ele5:   andq %r12, %r12
+0x148: 715b01000000000000   |         jle ele6:
+0x151: c0f00100000000000000 |         iaddq $1, %rax
+0x15b: 62dd                 | ele6:   andq %r13, %r13
+0x15d: 717001000000000000   |         jle ele7:
+0x166: c0f00100000000000000 |         iaddq $1, %rax
+0x170: 62ee                 | ele7:   andq %r14, %r14
+0x172: 718501000000000000   |         jle ele8:
+0x17b: c0f00100000000000000 |         iaddq $1, %rax
+0x185: 6233                 | ele8:   andq %rbx, %rbx
+0x187: 719a01000000000000   |         jle Npos1:
+0x190: c0f00100000000000000 |         iaddq $1, %rax
+0x19a: c0f74000000000000000 | Npos1:  iaddq $64, %rdi         # src++
+0x1a4: c0f64000000000000000 |         iaddq $64, %rsi         # dst++
+0x1ae: c0f2f8ffffffffffffff |         iaddq $-8, %rdx         # len--
+0x1b8: c0f1f8ffffffffffffff |         iaddq $-8, %rcx         # (len-8)--
+0x1c2: 765200000000000000   |         jg Loop1                # if so, goto Loop1:
+0x1cb: 6222                 | Next2:  andq %rdx,%rdx          # len <= 0?
+0x1cd: 712602000000000000   |         jle Done                # if so, goto Done:
+0x1d6: 50370000000000000000 | Loop3:	mrmovq (%rdi), %rbx	# read val from src...
+0x1e0: 40360000000000000000 | 	    rmmovq %rbx, (%rsi)	# ...and store it to dst
+0x1ea: 6233                 | 	    andq %rbx, %rbx		# val <= 0?
+0x1ec: 71ff01000000000000   | 	    jle Npos3		# if so, goto Npos3:
+0x1f5: c0f00100000000000000 | 	    iaddq $1, %rax		# count++
+0x1ff: c0f70800000000000000 | Npos3:	iaddq $8, %rdi		# src++
+0x209: c0f60800000000000000 | 	    iaddq $8, %rsi		# dst++
+0x213: c0f2ffffffffffffffff | 	    iaddq $-1, %rdx         # len--
+0x21d: 76d601000000000000   |         jg Loop3		# if so, goto Loop3:
+                            | ##################################################################
+                            | # Do not modify the following section of code
+                            | # Function epilogue.
+0x226:                      | Done:
+0x226: 90                   | 	ret
+                            | ##################################################################
+                            | # Keep the following label at the end of your function
+0x227:                      | End:
+                            | #/* $end ncopy-ys */EndFun:
+                            | #################################################################### 
+                            | # Epilogue code for the correctness testing driver
+                            | ####################################################################
+                            | 
+                            | # This is the correctness checking code.
+                            | # It checks:
+                            | #   1. %rax has 0.  Set %rax to 0xbbbb if not.
+                            | #   2. The total length of the code is less than or equal to 1000.
+                            | #      Set %rax to 0xcccc if not.
+                            | #   3. The source data was copied to the destination.
+                            | #      Set %rax to 0xdddd if not.
+                            | #   4. The words just before and just after the destination region
+                            | #      were not corrupted.  Set %rax to 0xeeee if not.
+                            | # If all checks pass, then sets %rax to 0xaaaa
+0x227:                      | check:
+                            | 	# Return value test
+0x227: 30fa0000000000000000 | 	irmovq $0,%r10
+0x231: 61a0                 | 	subq %r10,%rax
+0x233: 734f02000000000000   | 	je checkb
+0x23c: 30f0bbbb000000000000 | 	irmovq $0xbbbb,%rax  # Failed test #1
+0x246: 708d03000000000000   | 	jmp cdone
+0x24f:                      | checkb:
+                            | 	# Code length check
+0x24f: 30f0ffffffffffffffff | 	irmovq EndFun,%rax
+0x259: 30f23b00000000000000 | 	irmovq StartFun,%rdx
+0x263: 6120                 | 	subq %rdx,%rax
+0x265: 30f2e803000000000000 | 	irmovq $1000,%rdx
+0x26f: 6102                 | 	subq %rax,%rdx
+0x271: 758d02000000000000   | 	jge checkm
+0x27a: 30f0cccc000000000000 | 	irmovq $0xcccc,%rax  # Failed test #2
+0x284: 708d03000000000000   | 	jmp cdone
+0x28d:                      | checkm:
+0x28d: 30f2a803000000000000 | 	irmovq dest, %rdx # Pointer to next destination location
+0x297: 30f39003000000000000 | 	irmovq src,%rbx   # Pointer to next source location
+0x2a1: 30f70000000000000000 | 	irmovq $0,%rdi  # Count
+0x2ab: 6277                 | 	andq %rdi,%rdi
+0x2ad: 730b03000000000000   | 	je checkpre         # Skip check if count = 0
+0x2b6:                      | mcloop:
+0x2b6: 50020000000000000000 | 	mrmovq (%rdx),%rax
+0x2c0: 50630000000000000000 | 	mrmovq (%rbx),%rsi
+0x2ca: 6160                 | 	subq %rsi,%rax
+0x2cc: 73e802000000000000   | 	je  mok
+0x2d5: 30f0dddd000000000000 | 	irmovq $0xdddd,%rax # Failed test #3
+0x2df: 708d03000000000000   | 	jmp cdone
+0x2e8:                      | mok:
+0x2e8: 30f00800000000000000 | 	irmovq $8,%rax
+0x2f2: 6002                 | 	addq %rax,%rdx	  # dest ++
+0x2f4: 6003                 | 	addq %rax,%rbx    # src++
+0x2f6: 30f00100000000000000 | 	irmovq $1,%rax
+0x300: 6107                 | 	subq %rax,%rdi    # cnt--
+0x302: 76b602000000000000   | 	jg mcloop
+0x30b:                      | checkpre:
+                            | 	# Check for corruption
+0x30b: 30f2a003000000000000 | 	irmovq Predest,%rdx
+0x315: 50020000000000000000 | 	mrmovq (%rdx), %rax  # Get word before destination
+0x31f: 30f2fadebc0000000000 | 	irmovq $0xbcdefa, %rdx
+0x329: 6120                 | 	subq %rdx,%rax
+0x32b: 734703000000000000   | 	je checkpost
+0x334: 30f0eeee000000000000 | 	irmovq $0xeeee,%rax  # Failed test #4
+0x33e: 708d03000000000000   | 	jmp cdone
+0x347:                      | checkpost:
+                            | 	# Check for corruption
+0x347: 30f2a803000000000000 | 	irmovq Postdest,%rdx
+0x351: 50020000000000000000 | 	mrmovq (%rdx), %rax  # Get word after destination
+0x35b: 30f2bcfade0000000000 | 	irmovq $0xdefabc, %rdx
+0x365: 6120                 | 	subq %rdx,%rax
+0x367: 738303000000000000   | 	je checkok
+0x370: 30f0eeee000000000000 | 	irmovq $0xeeee,%rax # Failed test #4
+0x37a: 708d03000000000000   | 	jmp cdone
+0x383:                      | checkok:
+                            | 	# Successful checks
+0x383: 30f0aaaa000000000000 | 	irmovq $0xaaaa,%rax
+0x38d:                      | cdone:
+0x38d: 90                   | 	ret
+                            | 
+                            | ###############################
+                            | # Source and destination blocks 
+                            | ###############################
+0x390:                      | 	.align 8
+0x390:                      | src:
+0x390: fadebc0000000000     | 	.quad 0xbcdefa # This shouldn't get moved
+                            | 
+0x3a0:                      | 	.align 16
+0x3a0:                      | Predest:
+0x3a0: fadebc0000000000     | 	.quad 0xbcdefa
+0x3a8:                      | dest:
+0x3a8:                      | Postdest:
+0x3a8: bcfade0000000000     | 	.quad 0xdefabc
+                            | 
+0x3b0:                      | .align 8
+                            | # Run time stack
+0x3b0: 0000000000000000     | 	.quad 0
+0x3b8: 0000000000000000     | 	.quad 0
+0x3c0: 0000000000000000     | 	.quad 0
+0x3c8: 0000000000000000     | 	.quad 0
+0x3d0: 0000000000000000     | 	.quad 0
+0x3d8: 0000000000000000     | 	.quad 0
+0x3e0: 0000000000000000     | 	.quad 0
+0x3e8: 0000000000000000     | 	.quad 0
+0x3f0: 0000000000000000     | 	.quad 0
+0x3f8: 0000000000000000     | 	.quad 0
+0x400: 0000000000000000     | 	.quad 0
+0x408: 0000000000000000     | 	.quad 0
+0x410: 0000000000000000     | 	.quad 0
+0x418: 0000000000000000     | 	.quad 0
+0x420: 0000000000000000     | 	.quad 0
+0x428: 0000000000000000     | 	.quad 0
+                            | 
+0x430:                      | Stack:
